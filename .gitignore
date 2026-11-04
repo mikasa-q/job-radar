@@ -6,3 +6,8 @@ data/*.json
 
 data/*.html
 data/*.db
+
+# Python packaging artifacts
+*.egg-info/
+build/
+dist/

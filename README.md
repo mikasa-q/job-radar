@@ -13,16 +13,18 @@
 git clone https://github.com/mikasa-q/job-radar.git
 cd job-radar
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -e .
 ```
 
-Python 3.10 或以上。`requirements.lock.txt` 记录了已验证的精确依赖版本。
+Python 3.10 或以上。`pip install -e .` 将 `src/job_radar` 以可编辑方式安装到虚拟环境，
+并直接读取 `requirements.lock.txt` 的精确依赖；后续命令无需额外设置模块搜索路径。
+修改源码后无需重新安装；修改打包配置或锁文件后，重新执行安装命令。
 
 ### 1. 用离线样本跑通全链路
 
 ```bash
 # 采集样本并写入数据库（不联网）
-PYTHONPATH=src .venv/bin/python -m job_radar.cli \
+.venv/bin/python -m job_radar.cli \
   sample_data/boss-home.html \
   --site boss \
   --database data/jobs.db \
@@ -32,7 +34,7 @@ PYTHONPATH=src .venv/bin/python -m job_radar.cli \
 ### 2. 启动 API
 
 ```bash
-.venv/bin/python -m uvicorn job_radar.api:app --app-dir src --host 127.0.0.1 --port 8000
+.venv/bin/python -m uvicorn job_radar.api:app --host 127.0.0.1 --port 8000
 ```
 
 打开 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)，在 `GET /jobs` 点击 **Try it out**，
@@ -70,7 +72,7 @@ API 查询不触发采集，也不读取 CLI 配置文件。
 
 ```bash
 # 实时采集 Python.org 岗位并入库
-PYTHONPATH=src .venv/bin/python -m job_radar.cli \
+.venv/bin/python -m job_radar.cli \
   https://www.python.org/jobs/ \
   --site python-org \
   --database data/jobs.db \
@@ -78,7 +80,7 @@ PYTHONPATH=src .venv/bin/python -m job_radar.cli \
   --save-html data/python-org.latest.html
 
 # 查询库中地点含深圳的岗位
-PYTHONPATH=src .venv/bin/python -m job_radar.cli \
+.venv/bin/python -m job_radar.cli \
   --database data/jobs.db \
   --query-city 深圳 \
   --output data/query-shenzhen.jobs.json
@@ -114,7 +116,7 @@ PYTHONPATH=src .venv/bin/python -m job_radar.cli \
 ```
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m job_radar.cli \
+.venv/bin/python -m job_radar.cli \
   sample_data/boss-home.html \
   --site boss \
   --config config/shenzhen.json \
@@ -127,6 +129,7 @@ PYTHONPATH=src .venv/bin/python -m job_radar.cli \
 ## 项目结构
 
 ```text
+pyproject.toml 项目元数据、src 包发现与锁文件依赖
 src/job_radar/
   cli.py       接收命令参数；成功后写 JSON；失败时报告原因
   api.py       FastAPI 路由、参数校验和 HTTP 异常映射
@@ -148,14 +151,18 @@ NOTES.md       当前项目状态与下一步
 ## 测试与回滚
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m pytest -q
+.venv/bin/python -m pytest -q
 ./CHECK.sh baseline
 ./CHECK.sh modified
 ./CHECK.sh rollback
 ```
 
-`pytest.ini` 将默认测试目录固定为 tests，避免把归档基线重复收集。
+先完成快速开始中的可编辑安装。`pytest.ini` 仍是唯一的 pytest 配置入口，
+将默认测试目录固定为 tests，避免把归档基线重复收集。
 `./CHECK.sh rollback` 在独立副本验证阶段二恢复，工作 API 和数据库保持原状。
+
+本次打包更新的验证与专用回滚见 `verification/packaging/VERIFICATION.txt` 和
+`verification/packaging/ROLLBACK.sh`；回滚后需按旧方式指定模块搜索路径。
 
 ## 已知限制
 

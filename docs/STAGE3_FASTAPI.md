@@ -1,6 +1,6 @@
 # JobRadar 第三阶段：从 SQLite 脚本到 FastAPI 查询服务
 
-更新时间：2026-11-01。目标岗位：Python 后端实习，兼顾 AI/LLM 应用开发。目标技术：HTTP、FastAPI、Pydantic、SQLite 查询与接口测试。
+更新时间：2026-11-03（安装方式更新）。目标岗位：Python 后端实习，兼顾 AI/LLM 应用开发。目标技术：HTTP、FastAPI、Pydantic、SQLite 查询与接口测试。
 
 ## 0. 你这次得到了什么
 
@@ -37,10 +37,11 @@
 
 ```bash
 cd /Users/thc/Documents/Codex/2026-10-21/build-ios-apps-plugin-build-ios-3/outputs/job-radar
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -e .
 ```
 
-本机依赖已安装。`requirements.lock.txt` 记录本次实际测试版本；在兼容的 Python/平台环境里可用 `pip install -r requirements.lock.txt` 复现。
+新环境先运行 `python3 -m venv .venv`。上述可编辑安装直接读取 `requirements.lock.txt` 的精确依赖，
+并让虚拟环境中的 Python 找到 `src/job_radar`；后续 CLI、pytest、Uvicorn 命令均无需额外指定模块目录。
 
 ### 第二步：确认数据库已有数据
 
@@ -59,19 +60,19 @@ PY
 若在新副本中没有数据库，先沿用第二阶段 CLI 入库，**不加筛选条件**，避免只存入筛后子集：
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m job_radar.cli sample_data/boss-home.html --site boss --database data/jobs.db --output data/boss-import.jobs.json
-PYTHONPATH=src .venv/bin/python -m job_radar.cli sample_data/python-org.html --site python-org --database data/jobs.db --output data/python-import.jobs.json
+.venv/bin/python -m job_radar.cli sample_data/boss-home.html --site boss --database data/jobs.db --output data/boss-import.jobs.json
+.venv/bin/python -m job_radar.cli sample_data/python-org.html --site python-org --database data/jobs.db --output data/python-import.jobs.json
 ```
 
 ### 第三步：启动服务
 
 ```bash
-.venv/bin/python -m uvicorn job_radar.api:app --app-dir src --host 127.0.0.1 --port 8000 --reload
+.venv/bin/python -m uvicorn job_radar.api:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 这条命令保持运行，终端不立即回到提示符是正常的。`Ctrl+C` 停止。
 
-含义：Uvicorn 是负责监听 HTTP 的服务器；`job_radar.api` 是模块；冒号后的 `app` 是应用对象；`--app-dir src` 指定模块根目录；`--reload` 是开发时自动重载。
+含义：Uvicorn 是负责监听 HTTP 的服务器；`job_radar.api` 是模块；冒号后的 `app` 是应用对象；可编辑安装负责定位 `src` 下的包；`--reload` 是开发时自动重载。
 
 默认数据库通过项目文件位置确定，而不是靠当前终端目录猜测。更换数据库可在启动前指定环境变量 `JOBRADAR_DB`；不在每个 HTTP 请求里传文件路径。
 
@@ -314,11 +315,13 @@ connection.execute(
 ## 7. 验证与回滚
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m pytest -q
+.venv/bin/python -m pytest -q
 ./CHECK.sh baseline
 ./CHECK.sh modified
 ./CHECK.sh rollback
 ```
+
+运行前先完成第一步的可编辑安装；`pytest.ini` 保持为唯一测试配置。打包更新的验证与专用回滚记录见 `verification/packaging/VERIFICATION.txt`。
 
 本阶段基线指上一次 SQLite 阶段（39 通过），不是早期那个含过期断言的最初版本。回滚检查仅对副本运行，工作 API 保留。手动恢复阶段二的脚本是 `verification/stage3/ROLLBACK.sh`；根目录旧 `ROLLBACK.sh` 是更早版本的恢复工具，二者不要混淆。
 

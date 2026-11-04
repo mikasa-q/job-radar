@@ -1,12 +1,25 @@
 # JobRadar 当前状态
 
-更新时间：2026-11-01（第三阶段 FastAPI 查询）
+更新时间：2026-11-03（可编辑安装与模块路径）
 
 ## 当前版本
 
 工作目录：`/Users/thc/Documents/Codex/2026-10-21/build-ios-apps-plugin-build-ios-3/outputs/job-radar`
 
 原始版本保留在 `/Users/thc/Documents/Codex/2026-09-27/niu/outputs/job-radar`，未覆盖。
+
+## 本次打包更新（2026-11-03）
+
+- 新增 `pyproject.toml`：包名 `job_radar`，版本 `0.1.0`，Python `>=3.10`，从 `src` 发现包。
+- 安装依赖直接读取现有 `requirements.lock.txt`，32 项精确依赖与安装元数据一致；锁文件和原有依赖版本不变。
+- `.gitignore` 先增加 `*.egg-info/`、`build/`、`dist/`，生成的打包文件已确认被忽略。
+- 现有 `.venv` 已执行 `pip install -e .`。本机配置的镜像未找到构建用 setuptools，仅该次安装临时使用官方索引；没有修改 pip 全局配置。
+- README 和第三阶段教程已改成安装后直接运行，不再要求设置模块搜索路径或 Uvicorn 的 `--app-dir`。历史文档 `docs/README-20261101.md` 保持不变。
+- `env -u PYTHONPATH .venv/bin/pytest -q`：67 项通过；`env -u PYTHONPATH ./CHECK.sh modified`：67 项通过。
+- 真实启动 Uvicorn（无 `PYTHONPATH`、无 `--app-dir`），curl `/health` 和 `/jobs?limit=1` 均 HTTP 200；测试服务已停止。
+- 在独立副本和独立虚拟环境测试回滚：恢复本次 5 个路径、移除副本的可编辑安装，旧方式运行仍为 67 项通过；工作目录的安装保留。
+- 源码、测试逻辑、`pytest.ini`、依赖文件和数据库 SHA-256 保持不变；未增加业务功能。
+- 验证记录：`verification/packaging/VERIFICATION.txt`；本次专用回滚：`verification/packaging/ROLLBACK.sh`。如需使用历史阶段回滚，先撤销本次打包更新。
 
 ## 学习进度
 
